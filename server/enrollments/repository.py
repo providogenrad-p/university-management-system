@@ -2,7 +2,7 @@ from database import get_connection
 from enrollments.model import Enrollment
 
 class EnrollmentRepository:
-    def add(self, enrollment: Enrollment) -> None:
+    def add(self, enrollment: Enrollment) -> Enrollment:
         connection = get_connection()
         cursor = connection.cursor()
         cursor.execute(
@@ -10,7 +10,9 @@ class EnrollmentRepository:
             (enrollment.student_id, enrollment.course_id)
         )
         connection.commit()
+        enrollment.id = cursor.lastrowid
         connection.close()
+        return enrollment
 
     def exists(self, student_id: int, course_id: int) -> bool:
         connection = get_connection()

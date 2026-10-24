@@ -1,13 +1,14 @@
 import sqlite3
 import os
 
-DB_FILE = os.path.join("data", "university.db")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_FILE = os.path.join(BASE_DIR, "data", "university.db")
 
 def get_connection():
     return sqlite3.connect(DB_FILE)
 
 def initialize_database():
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
     connection = get_connection()
     cursor = connection.cursor()
     cursor.execute("""

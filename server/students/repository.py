@@ -2,7 +2,7 @@ from database import get_connection
 from students.model import Student
 
 class StudentRepository:
-    def add(self, student: Student) -> None:
+    def add(self, student: Student) -> Student:
         connection = get_connection()
         cursor = connection.cursor()
         cursor.execute(
@@ -10,7 +10,9 @@ class StudentRepository:
             (student.name, student.email)
         )
         connection.commit()
+        student.id = cursor.lastrowid
         connection.close()
+        return student
 
     def get_all(self) -> list[Student]:
         connection = get_connection()
