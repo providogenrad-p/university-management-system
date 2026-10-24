@@ -22,3 +22,11 @@ class EnrollmentRepository:
         row = cursor.fetchone()
         connection.close()
         return row is not None
+
+    def get_all(self) -> list[Enrollment]:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT id, student_id, course_id FROM enrollments")
+        rows = cursor.fetchall()
+        connection.close()
+        return [Enrollment(id=row[0], student_id=row[1], course_id=row[2]) for row in rows]

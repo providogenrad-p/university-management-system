@@ -28,3 +28,6 @@ class EnrollmentService:
 
         enrollment = Enrollment(id=None, student_id=student_id, course_id=course_id)
         self.repository.add(enrollment)
+
+    def get_enrollments(self) -> list[Enrollment]:
+        return self.repository.get_all()

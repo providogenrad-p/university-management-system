@@ -5,8 +5,37 @@ from courses.repository import CourseRepository
 from courses.service import CourseService
 from enrollments.repository import EnrollmentRepository
 from enrollments.service import EnrollmentService
+from plugin_manager import PluginManager
 
-def run_console(student_service, course_service, enrollment_service):
+def generate_report(student_service, course_service, enrollment_service, plugin_manager):
+    plugins = plugin_manager.get_plugins()
+    if not plugins:
+        print("No report plug-ins available.")
+        return
+
+    print("\n--- Available reports ---")
+    for index, plugin in enumerate(plugins, start=1):
+        print(f"{index}. {plugin.get_name()}")
+
+    selected = int(input("Select report: "))
+    if not 1 <= selected <= len(plugins):
+        print("Invalid report number.")
+        return
+
+    plugin = plugins[selected - 1]
+
+    # The core prepares the data; plug-ins never access SQLite.
+    data = {
+        "students": student_service.get_students(),
+        "courses": course_service.get_courses(),
+        "enrollments": enrollment_service.get_enrollments()
+    }
+
+    filename = plugin.generate(data)
+    print(f"Report created: {filename}")
+
+
+def run_console(student_service, course_service, enrollment_service, plugin_manager):
     while True:
         print("\n=== University Management System ===")
         print("1. Add Student")
@@ -14,6 +43,7 @@ def run_console(student_service, course_service, enrollment_service):
         print("3. Add Course")
         print("4. List Courses")
         print("5. Enroll Student in Course")
+        print("6. Generate Report")
         print("0. Exit")
         choice = input("\nSelect option: ")
 
@@ -43,6 +73,8 @@ def run_console(student_service, course_service, enrollment_service):
                 course_id = int(input("Course ID: "))
                 enrollment_service.enroll(student_id, course_id)
                 print("Student enrolled successfully.")
+            elif choice == "6":
+                generate_report(student_service, course_service, enrollment_service, plugin_manager)
             elif choice == "0":
                 print("Application closed.")
                 break
@@ -69,7 +101,15 @@ def main():
         course_service
     )
 
-    run_console(student_service, course_service, enrollment_service)
+    plugin_manager = PluginManager()
+    plugin_manager.load_plugins()
+
+    run_console(
+        student_service,
+        course_service,
+        enrollment_service,
+        plugin_manager
+    )
 
 if __name__ == "__main__":
     main()
