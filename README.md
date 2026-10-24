@@ -1,52 +1,77 @@
 # University Management System
 
-Console application in Python for managing students, courses and enrollments.
+Console application in Python for managing students, courses and enrollments,
+built step by step through three software architecture labs.
 
-Only the Python Standard Library is used.
+| Version | Lab | Architecture |
+|---------|-----|--------------|
+| `v1.0`  | Lab 1 | Modular Monolith |
+| `v2.0`  | Lab 2 | Microkernel / Plug-in (report plug-ins) |
+| `v3.0`  | Lab 3 | Client–Server, Multi-tier (HTTP + JSON) |
 
-## Run
+The current version (`main`) is **Lab 3**. Earlier versions are available under **Tags**.
 
-    python main.py
+Only the Python Standard Library is used – no Flask, FastAPI, Django or requests.
 
-## Menu
+## Architecture
 
-    1. Add Student
-    2. List Students
-    3. Add Course
-    4. List Courses
-    5. Enroll Student in Course
-    6. Generate Report
-    0. Exit
+    PRESENTATION   Console Client  (client/)
+          │
+          │  HTTP + JSON
+          ▼
+    APPLICATION    Application Server → Services → Repositories  (server/)
+          │
+          ▼
+    DATA           SQLite  (server/data/university.db)
+
+The client and the server are separate programs.
+The client never accesses the database directly – every operation goes through the HTTP API.
+Several clients can use the same server at the same time and see the same data.
+
+## How to run
+
+Start the server and the client in **two separate terminals**, from the project folder:
+
+    python server/application_server.py
+
+    python client/main.py
+
+The server must be started first. If it is not running, the client shows
+`Error: Application Server is unavailable.`
+
+To try multiple clients, start `python client/main.py` in a third terminal.
+
+## API
+
+| Method | Path           | Operation      | Request body                           |
+|--------|----------------|----------------|----------------------------------------|
+| GET    | `/students`    | List students  | –                                      |
+| POST   | `/students`    | Create student | `{"name": "...", "email": "..."}`      |
+| GET    | `/courses`     | List courses   | –                                      |
+| POST   | `/courses`     | Create course  | `{"name": "...", "teacher": "..."}`    |
+| POST   | `/enrollments` | Enroll student | `{"student_id": 1, "course_id": 1}`    |
+
+Status codes: `200 OK`, `201 Created`, `400 Bad Request`, `404 Not Found`, `500 Internal Server Error`.
+
+The GET endpoints can also be opened in a browser:
+http://127.0.0.1:8080/students and http://127.0.0.1:8080/courses
 
 ## Project structure
 
-    main.py              console menu (core)
-    database.py          SQLite connection
-    students/            model, repository, service
-    courses/             model, repository, service
-    enrollments/         model, repository, service
-    plugin_manager.py    discovers, loads and validates plug-ins
-    plugins/             report plug-ins
-      txt_report.py        -> reports/students.txt
-      statistics_report.py -> reports/statistics.txt
-    data/university.db   database (created automatically)
-    reports/             generated reports (created automatically)
+    client/
+      main.py                 console menu
+      http_client.py          sends HTTP requests over socket
+    server/
+      application_server.py   HTTP server: parses requests, calls services, sends JSON
+      database.py             SQLite connection and tables
+      students/               model, repository, service
+      courses/                model, repository, service
+      enrollments/            model, repository, service
+      data/university.db      database (created automatically)
 
-## Plug-ins
+## Business rules
 
-Every plug-in in `plugins/` must provide two functions:
-
-    def get_name():        # name shown in the menu
-    def generate(data):    # creates the report, returns the file path
-
-`data` is a dictionary prepared by the core:
-
-    {"students": [...], "courses": [...], "enrollments": [...]}
-
-The Plug-in Manager finds the plug-ins automatically with `os.listdir` and loads them with `importlib`.
-Files that don't follow the contract are skipped and the application keeps running.
-
-### Adding a new report
-
-Create a new file in `plugins/` (for example `html_report.py`) with `get_name()` and `generate(data)`,
-then restart the application. The new report appears in menu option 6 – no changes to the core are needed.
+The rules stay in the services on the server:
+- student name is required and the email must be valid;
+- course name and teacher are required;
+- a student can be enrolled only in an existing course, and only once.
