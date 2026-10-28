@@ -103,7 +103,19 @@ def enrollment_to_dict(enrollment):
 # ---------- Tasks 3-5: routing ----------
 
 def handle_request(method, path, body):
-    path = path.split("?")[0]  # ignore query string, e.g. /students?x=1
+    path = path.split("?")[0]
+    
+    if method == "GET" and path == "/":
+        return 200, {
+            "service": "University Management System API",
+            "endpoints": [
+                "GET  /students",
+                "POST /students",
+                "GET  /courses",
+                "POST /courses",
+                "POST /enrollments"
+            ]
+        }  # ignore query string, e.g. /students?x=1
 
     # Students
     if method == "GET" and path == "/students":
