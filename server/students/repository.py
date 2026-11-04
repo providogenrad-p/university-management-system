@@ -31,3 +31,13 @@ class StudentRepository:
         if row:
             return Student(id=row[0], name=row[1], email=row[2])
         return None
+
+    def get_by_email(self, email: str) -> Student | None:
+        connection = get_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT id, name, email FROM students WHERE email = ?", (email,))
+        row = cursor.fetchone()
+        connection.close()
+        if row:
+            return Student(id=row[0], name=row[1], email=row[2])
+        return None

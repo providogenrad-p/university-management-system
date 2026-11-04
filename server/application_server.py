@@ -170,6 +170,7 @@ def main():
 
     while True:
         client, address = server.accept()
+        client.settimeout(2)
         try:
             headers, body = receive_request(client)
             if not headers:
